@@ -12,12 +12,48 @@
 */
 
 use Illuminate\Http\Request;
+
 use App\Place;
 
 Route::get('/', function () {
-//    $place = Place::find(5);
-//    $data = (object) $place->data;
-//    echo $data->name;
+
+    $response = Curl::to('https://maps.googleapis.com/maps/api/geocode/json?language=ru_RU&latlng=56.315251444657584,44.20773983001709&key=AIzaSyDDNOw7N1klkn-B0sqipJ4vxcaC9mQhHxc')
+        ->asJson()
+        ->get();
+
+    if ($response->status === 'OK') {
+        $results = $response->results;
+        $neededTypes = [
+            'country',
+            'administrative_area_level_1',
+            'administrative_area_level_2',
+            'locality',
+            'street_address', 'route'
+        ];
+        foreach ($results as $place) {
+            $inspect = array_intersect($neededTypes, $place->types);
+            if ($inspect) {
+                $type = array_shift($inspect);
+                $name = null;
+                foreach($place->address_components as $address_component) {
+                    if (in_array($type, $address_component->types)) {
+                        $name = $address_component->long_name;
+                    }
+                }
+                echo "type: $type \n";
+                echo "p_id: $place->place_id \n";
+                echo "name: $name \n";
+                echo "=================================\n";
+            }
+        }
+
+
+    }
+    die();
+    dd($results);
+
+
+
     return view('welcome');
 });
 
